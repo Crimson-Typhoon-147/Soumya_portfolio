@@ -154,6 +154,9 @@ line-height: 30px;
     display: block;
     
 }
+.tab-contents.certificates ul li a{
+    color: #ff004f;
+}
 
 /*-----------/*PROJECTS-------------*/
 #projects{
