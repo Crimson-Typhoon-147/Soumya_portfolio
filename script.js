@@ -336,3 +336,13 @@ function initTerminalInput() {
         }
     }
 }
+//loader
+window.addEventListener("load", () => {
+    const loader = document.getElementById("cyber-loader");
+    if (loader) {
+      setTimeout(() => {
+        loader.style.display = "none";
+      }, 3000); // Loader disappears after 3 seconds
+    }
+  });
+  
