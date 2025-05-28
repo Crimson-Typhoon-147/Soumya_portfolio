@@ -264,7 +264,7 @@ function initTerminalInput() {
             <div class="terminal-button terminal-button-red"></div>
             <div class="terminal-button terminal-button-yellow"></div>
             <div class="terminal-button terminal-button-green"></div>
-            <div class="terminal-title">terminal -- user@ethicalhacker:~</div>
+            <div class="terminal-title">terminal -- user@soumya:~</div>
         </div>
         <div class="terminal-content" id="terminal-output">
             <p><span class="terminal-prompt">$</span> System initialized</p>
@@ -336,13 +336,3 @@ function initTerminalInput() {
         }
     }
 }
-//loader
-window.addEventListener("load", () => {
-    const loader = document.getElementById("cyber-loader");
-    if (loader) {
-      setTimeout(() => {
-        loader.style.display = "none";
-      }, 3000); // Loader disappears after 3 seconds
-    }
-  });
-  
