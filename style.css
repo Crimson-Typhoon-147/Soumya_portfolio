@@ -253,6 +253,7 @@ nav ul li a:hover::after{
     margin-top: 20px;
     display: flex;
     align-items: center;
+    
 }
 
 .terminal-input::before {
@@ -268,6 +269,7 @@ nav ul li a:hover::after{
     font-family: 'Courier New', monospace;
     width: 100%;
     outline: none;
+    flex-basis: auto;
 }
 
 .terminal-window {
@@ -277,6 +279,7 @@ nav ul li a:hover::after{
     padding: 10px;
     margin: 20px 0;
     position: relative;
+    flex-basis: 100%;
 }
 
 .terminal-header {
@@ -576,7 +579,7 @@ nav ul li a:hover::after{
 }
 
 .contact-left{
-    flex-basis: 50%;
+    flex-basis: 45%;
     padding: 0 10%;
 }
 .contact-right{
@@ -953,6 +956,40 @@ img {
   align-items: center;
 }
 
+/* Responsive CSS Fixes for Portfolio Website */
+
+/* ===== GENERAL RESPONSIVE IMPROVEMENTS ===== */
+
+/* Use relative units for better scaling */
+body, html {
+  font-size: 16px; /* Base font size */
+}
+
+/* Ensure all images are responsive */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ===== ABOUT ME SECTION FIXES ===== */
+
+/* Fix for About Me section visibility on mobile */
+#about {
+  overflow: visible;
+}
+
+/* Email overflow fix in contact section */
+.contact-left p {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+#mail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
 /* ===== ENHANCED MEDIA QUERIES ===== */
 
 /* Small phones (320px - 480px) */
@@ -1130,8 +1167,6 @@ img {
   .terminal-window {
     padding: 8px;
     margin: 15px 0;
-    width: 100%;
-    max-width: 500px;
   }
   
   .terminal-header {
@@ -1161,27 +1196,5 @@ img {
     padding: 15px 40px;
   }
 }
-/* For desktop screens */
-@media only screen and (min-width: 1025px) {
-    .terminal-window {
-      width: 100%;
-      max-width: 500px; /* Adjust this value for desktop */
-    }
-  }
-  
-  /* For tablets */
-  @media only screen and (min-width: 768px) and (max-width: 1024px) {
-    .terminal-window {
-      width: 100%;
-      max-width: 450px; /* Adjust this value for tablets */
-    }
-  }
-  
-  /* For mobile phones */
-  @media only screen and (max-width: 767px) {
-    .terminal-window {
-      width: 100%; /* Full width on mobile */
-      max-width: none; /* No maximum width on mobile */
-    }
-  }
+
   
