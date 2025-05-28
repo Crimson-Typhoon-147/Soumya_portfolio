@@ -1,3 +1,105 @@
+// Terminal Command Animation Functions
+
+// Array of security-related commands to display - only the two you requested
+const securityCommands = [
+    {
+      command: "establishing secure connection...",
+      output: "Secure connection established. Encryption: AES-256."
+    },
+    {
+      command: "loading portfolio assets...",
+      output: "Assets loaded successfully. Preparing display..."
+    }
+  ];
+  
+  // Function to simulate typing effect
+  function typeCommand(element, text, speed = 50) {
+    return new Promise(resolve => {
+      let i = 0;
+      const timer = setInterval(() => {
+        if (i < text.length) {
+          element.textContent += text.charAt(i);
+          i++;
+        } else {
+          clearInterval(timer);
+          resolve();
+        }
+      }, speed);
+    });
+  }
+  
+  // Function to animate terminal commands
+  async function animateTerminal() {
+    const typingElement = document.querySelector('.typing-text');
+    const outputElement = document.querySelector('.command-output');
+    
+    for (const cmd of securityCommands) {
+      // Clear previous text
+      typingElement.textContent = '';
+      outputElement.textContent = '';
+      
+      // Type the command
+      await typeCommand(typingElement, cmd.command);
+      
+      // Wait a bit after typing command
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Show output
+      outputElement.textContent = cmd.output;
+      
+      // Wait before next command
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    // Hide loader after all commands are executed
+    hideLoader();
+  }
+  
+  // Function to hide loader
+  function hideLoader() {
+    const loader = document.querySelector('.loader-container');
+    if (loader) {
+      loader.classList.add('hidden');
+      // Remove loader from DOM after transition completes
+      setTimeout(() => {
+        loader.remove();
+      }, 500);
+    }
+  }
+  
+  // Function to initialize terminal loader
+  function initTerminalLoader() {
+    // Create the terminal loader HTML
+    const loaderHTML = `
+      <div class="loader-container">
+        <div class="terminal-loader">
+          <div class="terminal-header">
+            <div class="terminal-buttons">
+              <span class="terminal-button"></span>
+              <span class="terminal-button"></span>
+              <span class="terminal-button"></span>
+            </div>
+            <div class="terminal-title">security@system:~</div>
+          </div>
+          <div class="terminal-content">
+            <div class="command-line">$ <span class="typing-text"></span><span class="cursor">|</span></div>
+            <div class="command-output"></div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Create a container for the loader
+    const loaderContainer = document.createElement('div');
+    loaderContainer.innerHTML = loaderHTML;
+    
+    // Insert at the beginning of the body
+    document.body.insertBefore(loaderContainer, document.body.firstChild);
+    
+    // Start the terminal animation
+    animateTerminal();
+  }
+  
 var TxtType = function(el, toRotate, period) {
     this.toRotate = toRotate;
     this.el = el;
@@ -336,3 +438,5 @@ function initTerminalInput() {
         }
     }
 }
+
+document.addEventListener('DOMContentLoaded', initTerminalLoader);
