@@ -439,4 +439,5 @@ function initTerminalInput() {
     }
 }
 
+
 document.addEventListener('DOMContentLoaded', initTerminalLoader);
