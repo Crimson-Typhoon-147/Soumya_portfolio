@@ -1,443 +1,1615 @@
-// Terminal Command Animation Functions
+/*
+  ============================================================
+  CRIMSON TYPHOON PORTFOLIO CONTROLLER
+  ============================================================
 
-// Array of security-related commands to display - only the two you requested
-const securityCommands = [
+  LIVE DATA ARCHITECTURE
+
+  The browser tries:
+
+      /api/portfolio/stats
+      /api/portfolio/research
+
+  Keep private HTB/PicoCTF credentials on your server.
+  DO NOT put API tokens inside this JavaScript file.
+
+  Expected stats response:
+
+  {
+    "ctfs": 12,
+    "flags": 48,
+    "projects": 3,
+    "articles": 7,
+    "htbGlobal": 12345,
+    "htbSeason": 456
+  }
+
+  Research endpoint can return:
+
+  [
     {
-      command: "establishing secure connection...",
-      output: "Secure connection established. Encryption: AES-256."
-    },
+      "source": "HTB",
+      "date": "2026",
+      "title": "Example write-up",
+      "summary": "Short description",
+      "url": "https://..."
+    }
+  ]
+
+  ============================================================
+*/
+
+
+window.PORTFOLIO_API =
+  window.PORTFOLIO_API ||
+  '/api/portfolio';
+
+
+const siteData = {
+
+  /*
+    Safe fallback values.
+
+    Replace these only if you want static fallback numbers.
+    Normally your backend endpoint should overwrite them.
+  */
+
+  stats: {
+
+    ctfs: 0,
+
+    flags: 0,
+
+    projects: 3,
+
+    articles: 0,
+
+    htbGlobal: '—',
+
+    htbSeason: '—'
+
+  },
+
+
+  /*
+    PINNED HTB WRITE-UPS
+
+    Add your best 2–3 write-ups here.
+
+    Example:
+
     {
-      command: "loading portfolio assets...",
-      output: "Assets loaded successfully. Preparing display..."
+      source: 'HTB',
+      date: '2026',
+      title: 'Box Name — Initial Access',
+      summary: 'Short description.',
+      url: 'https://...'
     }
-  ];
-  
-  // Function to simulate typing effect
-  function typeCommand(element, text, speed = 50) {
-    return new Promise(resolve => {
-      let i = 0;
-      const timer = setInterval(() => {
-        if (i < text.length) {
-          element.textContent += text.charAt(i);
-          i++;
-        } else {
-          clearInterval(timer);
-          resolve();
-        }
-      }, speed);
-    });
-  }
-  
-  // Function to animate terminal commands
-  async function animateTerminal() {
-    const typingElement = document.querySelector('.typing-text');
-    const outputElement = document.querySelector('.command-output');
-    
-    for (const cmd of securityCommands) {
-      // Clear previous text
-      typingElement.textContent = '';
-      outputElement.textContent = '';
-      
-      // Type the command
-      await typeCommand(typingElement, cmd.command);
-      
-      // Wait a bit after typing command
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Show output
-      outputElement.textContent = cmd.output;
-      
-      // Wait before next command
-      await new Promise(resolve => setTimeout(resolve, 1000));
+  */
+
+  pinnedWriteups: [],
+
+
+  /*
+    CUSTOM ARTICLES
+
+    These are articles that you publish directly on
+    your own portfolio instead of Medium.
+
+    Example:
+
+    {
+      source: 'CRIMSON TYPHOON',
+      date: '2026',
+      title: 'Understanding OTP Abuse',
+      summary: 'A practical analysis...',
+      url: '/research/otp-abuse.html'
     }
-    
-    // Hide loader after all commands are executed
-    hideLoader();
-  }
-  
-  // Function to hide loader
-  function hideLoader() {
-    const loader = document.querySelector('.loader-container');
-    if (loader) {
-      loader.classList.add('hidden');
-      // Remove loader from DOM after transition completes
-      setTimeout(() => {
-        loader.remove();
-      }, 500);
-    }
-  }
-  
-  // Function to initialize terminal loader
-  function initTerminalLoader() {
-    // Create the terminal loader HTML
-    const loaderHTML = `
-      <div class="loader-container">
-        <div class="terminal-loader">
-          <div class="terminal-header">
-            <div class="terminal-buttons">
-              <span class="terminal-button"></span>
-              <span class="terminal-button"></span>
-              <span class="terminal-button"></span>
-            </div>
-            <div class="terminal-title">security@system:~</div>
-          </div>
-          <div class="terminal-content">
-            <div class="command-line">$ <span class="typing-text"></span><span class="cursor">|</span></div>
-            <div class="command-output"></div>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    // Create a container for the loader
-    const loaderContainer = document.createElement('div');
-    loaderContainer.innerHTML = loaderHTML;
-    
-    // Insert at the beginning of the body
-    document.body.insertBefore(loaderContainer, document.body.firstChild);
-    
-    // Start the terminal animation
-    animateTerminal();
-  }
-  
-var TxtType = function(el, toRotate, period) {
-    this.toRotate = toRotate;
-    this.el = el;
-    this.loopNum = 0;
-    this.period = parseInt(period, 10) || 2000;
-    this.txt = '';
-    this.tick();
-    this.isDeleting = false;
+  */
+
+  localResearch: [],
+
+
+  /*
+    PUBLIC MEDIUM RSS FEEDS
+
+    Current known Medium account:
+
+      @crimsontyphoon
+
+    Add the second account when you have its username.
+  */
+
+  mediumFeeds: [
+
+    'https://medium.com/feed/@crimsontyphoon'
+
+    // Example:
+    // 'https://medium.com/feed/@YOUR_SECOND_MEDIUM_USERNAME'
+
+  ]
+
 };
 
-TxtType.prototype.tick = function() {
-    var i = this.loopNum % this.toRotate.length;
-    var fullTxt = this.toRotate[i];
 
-    if (this.isDeleting) {
-    this.txt = fullTxt.substring(0, this.txt.length - 1);
-    } else {
-    this.txt = fullTxt.substring(0, this.txt.length + 1);
-    }
+/* ============================================================
+   MAIN
+============================================================ */
 
-    this.el.innerHTML = '<span class="wrap glitch-text" data-text="' + this.txt + '">'+this.txt+'</span>';
+(() => {
 
-    var that = this;
-    var delta = 200 - Math.random() * 100;
-
-    if (this.isDeleting) { delta /= 2; }
-
-    if (!this.isDeleting && this.txt === fullTxt) {
-    delta = this.period;
-    this.isDeleting = true;
-    } else if (this.isDeleting && this.txt === '') {
-    this.isDeleting = false;
-    this.loopNum++;
-    delta = 500;
-    }
-
-    setTimeout(function() {
-    that.tick();
-    }, delta);
-};
-
-window.onload = function() {
-    var elements = document.getElementsByClassName('typewrite');
-    for (var i=0; i<elements.length; i++) {
-        var toRotate = elements[i].getAttribute('data-type');
-        var period = elements[i].getAttribute('data-period');
-        if (toRotate) {
-          new TxtType(elements[i], JSON.parse(toRotate), period);
-        }
-    }
-    
-    // INJECT CSS
-    var css = document.createElement("style");
-    css.type = "text/css";
-    css.innerHTML = ".typewrite > .wrap { border-right: 0.08em solid #00ff41}";
-    document.body.appendChild(css);
-    
-    // Add glitch effect to headings
-    addGlitchEffect();
-    
-    // Initialize Matrix rain effect
-    initMatrixRain();
-    
-    // Add terminal command input functionality
-    initTerminalInput();
-};
-
-///------tablinks----/////
-var tablinks = document.getElementsByClassName("tab-links");
-var tabcontents = document.getElementsByClassName("tab-contents");
-
-function opentab(tabname){
-    for(tablink of tablinks){
-        tablink.classList.remove("active-link")
-    }
-    for(tabcontent of tabcontents){
-        tabcontent.classList.remove("active-tab")
-    }
-    event.currentTarget.classList.add("active-link");
-    document.getElementById(tabname).classList.add("active-tab");
-}
+  const reducedMotion =
+    window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
 
 
-var sidemenu = document.getElementById("sidemenu");
+  /* ==========================================================
+     MOBILE NAVIGATION
+  ========================================================== */
 
-function openmenu(){
-    sidemenu.style.right="0";
-}
+  const menuToggle =
+    document.querySelector('.menu-toggle');
 
-function closemenu(){
-    sidemenu.style.right="-200px";
-}
+  const siteNav =
+    document.querySelector('.site-nav');
 
-//----------google sheet--------
 
-const scriptURL = 'https://script.google.com/macros/s/AKfycbyqI3QvVkvVPV9mXmwxM475QwAEEphy5TRJRsfBdWzzfUMX2ONm83fHRz-8c-t8jvdW/exec'
-const form = document.forms['submit-to-google-sheet']
+  menuToggle?.addEventListener('click', () => {
 
-form.addEventListener('submit', e => {
-    e.preventDefault();
-    
-    // Show loading message
-    document.querySelector('.alert').innerHTML = "Sending message...";
-    document.querySelector('.alert').style.display = 'block';
-    
-    fetch(scriptURL, { method: 'POST', body: new FormData(form)})
-      .then(response => {
-          console.log('Success!', response);
-          
-          // Show success message with terminal-style typing effect
-          const alertElement = document.querySelector('.alert');
-          alertElement.innerHTML = "";
-          
-          const successMessages = [
-            "Message received...",
-            "Processing data...",
-            "Connection secure...",
-            "Message delivered successfully."
-          ];
-          
-          // Type out each message with delay
-          let messageIndex = 0;
-          let charIndex = 0;
-          
-          function typeNextMessage() {
-            if (messageIndex < successMessages.length) {
-              if (charIndex === 0) {
-                alertElement.innerHTML += "<div></div>";
-              }
-              
-              const currentDiv = alertElement.querySelectorAll('div')[messageIndex];
-              const currentMessage = successMessages[messageIndex];
-              
-              if (charIndex < currentMessage.length) {
-                currentDiv.textContent += currentMessage.charAt(charIndex);
-                charIndex++;
-                setTimeout(typeNextMessage, 30);
-              } else {
-                messageIndex++;
-                charIndex = 0;
-                setTimeout(typeNextMessage, 500);
-              }
-            } else {
-              // Clear form after messages complete
-              form.reset();
-              
-              // Hide alert after delay
-              setTimeout(() => {
-                alertElement.style.display = 'none';
-              }, 2000);
-            }
-          }
-          
-          typeNextMessage();
-      })
-      .catch(error => {
-          console.error('Error!', error.message);
-          document.querySelector('.alert').innerHTML = "Error sending message. Please try again.";
-          
-          // Hide alert after delay
-          setTimeout(() => {
-            document.querySelector('.alert').style.display = 'none';
-          }, 3000);
-      });
+    const open =
+      siteNav.classList.toggle('is-open');
+
+    menuToggle.setAttribute(
+      'aria-expanded',
+      String(open)
+    );
+
   });
-// Function to add glitch effect to headings
-function addGlitchEffect() {
-    // Add glitch effect to sub-titles
-    const subTitles = document.querySelectorAll('.sub-title');
-    subTitles.forEach(title => {
-        title.classList.add('glitch-text');
-        title.setAttribute('data-text', title.textContent);
-    });
-    
-    // Add glitch effect to project titles
-    const projectTitles = document.querySelectorAll('.projects-list div h2');
-    projectTitles.forEach(title => {
-        title.classList.add('glitch-text');
-        title.setAttribute('data-text', title.textContent);
-    });
-}
 
-// Matrix rain effect
-function initMatrixRain() {
-    // Create canvas element
-    const matrixRain = document.createElement('div');
-    matrixRain.className = 'matrix-rain';
-    const canvas = document.createElement('canvas');
-    matrixRain.appendChild(canvas);
-    document.body.appendChild(matrixRain);
-    
-    // Set canvas dimensions
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    
-    // Get canvas context
-    const ctx = canvas.getContext('2d');
-    
-    
-    // Font size and columns
-    const fontSize = 14;
-    const columns = canvas.width / fontSize;
-    
-    // Array to track the y position of each drop
-    const drops = [];
-    for (let i = 0; i < columns; i++) {
-        drops[i] = 1;
-    }
-    
-    // Draw the matrix rain
-    function drawMatrixRain() {
-        // Set semi-transparent black background
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Set text color and font
-        ctx.fillStyle = '#00ff41';
-        ctx.font = fontSize + 'px monospace';
-        
-        // Draw characters
-        for (let i = 0; i < drops.length; i++) {
-            // Random character
-            const text = chars.charAt(Math.floor(Math.random() * chars.length));
-            
-            // Draw the character
-            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-            
-            // Reset drop position if it's at the bottom or randomly
-            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                drops[i] = 0;
+
+  siteNav
+    ?.querySelectorAll('a')
+    .forEach((link) => {
+
+      link.addEventListener('click', () => {
+
+        siteNav.classList.remove('is-open');
+
+        menuToggle?.setAttribute(
+          'aria-expanded',
+          'false'
+        );
+
+      });
+
+    });
+
+
+  /* ==========================================================
+     SCROLL REVEALS
+  ========================================================== */
+
+  const revealItems =
+    [...document.querySelectorAll('.reveal')];
+
+
+  if (
+    'IntersectionObserver' in window &&
+    !reducedMotion
+  ) {
+
+    const revealObserver =
+      new IntersectionObserver(
+
+        (entries, observer) => {
+
+          entries.forEach((entry) => {
+
+            if (entry.isIntersecting) {
+
+              entry.target.classList.add(
+                'is-visible'
+              );
+
+              observer.unobserve(
+                entry.target
+              );
+
             }
-            
-            // Move the drop down
-            drops[i]++;
-        }
-    }
-    
-    // Set interval to animate the rain
-    setInterval(drawMatrixRain, 50);
-    
-    // Resize canvas when window is resized
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    });
-}
 
-// Terminal command input functionality
-function initTerminalInput() {
-    // Create terminal input element
-    const terminalInput = document.createElement('div');
-    terminalInput.className = 'terminal-input';
-    terminalInput.innerHTML = '<input type="text" placeholder="Type a command..." id="terminal-command-input">';
-    
-    // Add terminal input to header
-    const headerText = document.querySelector('.header-text');
-    headerText.appendChild(terminalInput);
-    
-    // Create terminal output element
-    const terminalOutput = document.createElement('div');
-    terminalOutput.className = 'terminal-window';
-    terminalOutput.innerHTML = `
-        <div class="terminal-header">
-            <div class="terminal-button terminal-button-red"></div>
-            <div class="terminal-button terminal-button-yellow"></div>
-            <div class="terminal-button terminal-button-green"></div>
-            <div class="terminal-title">terminal -- user@soumya:~</div>
-        </div>
-        <div class="terminal-content" id="terminal-output">
-            <p><span class="terminal-prompt">$</span> System initialized</p>
-            <p><span class="terminal-prompt">$</span> Type 'help' for available commands</p>
-        </div>
-    `;
-    
-    // Add terminal output below terminal input
-    headerText.appendChild(terminalOutput);
-    
-    // Handle terminal input
-    const commandInput = document.getElementById('terminal-command-input');
-    const output = document.getElementById('terminal-output');
-    
-    commandInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            const command = this.value.trim().toLowerCase();
-            const response = processCommand(command);
-            
-            // Add command to output
-            output.innerHTML += `<p><span class="terminal-prompt">$</span> ${command}</p>`;
-            
-            // Add response to output
-            if (response) {
-                output.innerHTML += `<p>${response}</p>`;
+          });
+
+        },
+
+        {
+          threshold: 0.12
+        }
+
+      );
+
+
+    revealItems.forEach((item) => {
+
+      revealObserver.observe(item);
+
+    });
+
+  } else {
+
+    revealItems.forEach((item) => {
+
+      item.classList.add(
+        'is-visible'
+      );
+
+    });
+
+  }
+
+
+  /* ==========================================================
+     REFERENCE-STYLE CHECKER GRID
+  ==========================================================
+
+  The grid is intentionally very faint.
+
+  When a content section becomes the active viewport area,
+  the grid becomes slightly more visible.
+
+  This gives the "appears when the section is highlighted"
+  effect without copying the reference website.
+  ========================================================== */
+
+  const gridSections =
+    [...document.querySelectorAll(
+      '[data-grid-section]'
+    )];
+
+
+  if ('IntersectionObserver' in window) {
+
+    const gridObserver =
+      new IntersectionObserver(
+
+        (entries) => {
+
+          const visible =
+            entries.some(
+              (entry) =>
+                entry.isIntersecting
+            );
+
+          document.body.classList.toggle(
+            'grid-active',
+            visible
+          );
+
+        },
+
+        {
+          threshold: 0.25
+        }
+
+      );
+
+
+    gridSections.forEach((section) => {
+
+      gridObserver.observe(section);
+
+    });
+
+  }
+
+
+  /* ==========================================================
+     LIVE COUNTERS
+  ========================================================== */
+
+  const counterNodes =
+    [...document.querySelectorAll(
+      '[data-count]'
+    )];
+
+
+  const formatNumber = (value) => {
+
+    if (
+      typeof value === 'string' &&
+      value === '—'
+    ) {
+
+      return '—';
+
+    }
+
+
+    const number =
+      Number(value);
+
+
+    return Number.isFinite(number)
+      ? number.toLocaleString('en-IN')
+      : '—';
+
+  };
+
+
+  const animateCounter =
+    (
+      element,
+      target,
+      duration = 1300
+    ) => {
+
+      if (
+        typeof target === 'string' ||
+        !Number.isFinite(
+          Number(target)
+        )
+      ) {
+
+        element.textContent =
+          target ?? '—';
+
+        return;
+
+      }
+
+
+      const end =
+        Number(target);
+
+
+      if (reducedMotion) {
+
+        element.textContent =
+          formatNumber(end);
+
+        return;
+
+      }
+
+
+      const start =
+        performance.now();
+
+
+      const from = 0;
+
+
+      const tick = (now) => {
+
+        const progress =
+          Math.min(
+            (now - start) / duration,
+            1
+          );
+
+
+        const eased =
+          1 -
+          Math.pow(
+            1 - progress,
+            3
+          );
+
+
+        element.textContent =
+          formatNumber(
+            Math.round(
+              from +
+              (end - from) *
+              eased
+            )
+          );
+
+
+        if (progress < 1) {
+
+          requestAnimationFrame(
+            tick
+          );
+
+        }
+
+      };
+
+
+      requestAnimationFrame(tick);
+
+    };
+
+
+  let statsAnimated = false;
+
+
+  const statsSection =
+    document.querySelector(
+      '#practice'
+    );
+
+
+  const runStatsAnimation = () => {
+
+    if (statsAnimated) {
+      return;
+    }
+
+
+    statsAnimated = true;
+
+
+    counterNodes.forEach((node) => {
+
+      animateCounter(
+        node,
+        siteData.stats[
+          node.dataset.count
+        ]
+      );
+
+    });
+
+  };
+
+
+  if (
+    statsSection &&
+    'IntersectionObserver' in window
+  ) {
+
+    const statsObserver =
+      new IntersectionObserver(
+
+        ([entry]) => {
+
+          if (entry.isIntersecting) {
+
+            runStatsAnimation();
+
+            statsObserver.disconnect();
+
+          }
+
+        },
+
+        {
+          threshold: 0.25
+        }
+
+      );
+
+
+    statsObserver.observe(
+      statsSection
+    );
+
+  } else {
+
+    runStatsAnimation();
+
+  }
+
+
+  const renderProofStrip = () => {
+
+    document
+      .querySelectorAll(
+        '.proof-item [data-count]'
+      )
+      .forEach((node) => {
+
+        const value =
+          siteData.stats[
+            node.dataset.count
+          ];
+
+        node.textContent =
+          formatNumber(value);
+
+      });
+
+  };
+
+
+  renderProofStrip();
+
+
+  /* ==========================================================
+     SECURITY ORBIT
+  ========================================================== */
+
+  const orbit =
+    document.querySelector(
+      '#security-orbit'
+    );
+
+
+  const orbitNodes =
+    [
+      ...document.querySelectorAll(
+        '.orbit-node'
+      )
+    ];
+
+
+  const orbitLines =
+    [
+      ...document.querySelectorAll(
+        '.orbit-connections line'
+      )
+    ];
+
+
+  let orbitAngle =
+    -Math.PI / 2;
+
+
+  let orbitVisible =
+    false;
+
+
+  let orbitPaused =
+    false;
+
+
+  let orbitPinned =
+    null;
+
+
+  let orbitFrame =
+    null;
+
+
+  let lastFrame =
+    performance.now();
+
+
+  /*
+    Six nodes around the orbit.
+
+    Labels stay upright because we move each node's
+    position using JS instead of rotating the node itself.
+  */
+
+  const orbitAngles = [
+
+    -Math.PI / 2,
+
+    -Math.PI / 6,
+
+    Math.PI / 6,
+
+    Math.PI / 2,
+
+    5 * Math.PI / 6,
+
+    7 * Math.PI / 6
+
+  ];
+
+
+  const clearOrbitActive = () => {
+
+    orbitNodes.forEach((node) => {
+
+      node.classList.remove(
+        'is-active'
+      );
+
+    });
+
+
+    orbitLines.forEach((line) => {
+
+      line.classList.remove(
+        'active'
+      );
+
+    });
+
+  };
+
+
+  const setOrbitActive =
+    (
+      node,
+      active
+    ) => {
+
+      node.classList.toggle(
+        'is-active',
+        active
+      );
+
+
+      const domain =
+        node.dataset.domain;
+
+
+      orbitLines.forEach((line) => {
+
+        line.classList.toggle(
+          'active',
+
+          active &&
+          line.dataset.line ===
+            domain
+        );
+
+      });
+
+    };
+
+
+  const pauseOrbit =
+    (node = null) => {
+
+      orbitPaused = true;
+
+      clearOrbitActive();
+
+
+      if (node) {
+
+        setOrbitActive(
+          node,
+          true
+        );
+
+      }
+
+    };
+
+
+  const resumeOrbit = () => {
+
+    if (orbitPinned) {
+      return;
+    }
+
+
+    orbitPaused = false;
+
+    clearOrbitActive();
+
+  };
+
+
+  const updateOrbit =
+    (time) => {
+
+      if (!orbit) {
+        return;
+      }
+
+
+      const rect =
+        orbit.getBoundingClientRect();
+
+
+      const width =
+        rect.width;
+
+
+      const height =
+        rect.height;
+
+
+      const cx =
+        width / 2;
+
+
+      const cy =
+        height / 2;
+
+
+      const mobile =
+        width < 680;
+
+
+      const radius =
+        Math.min(
+
+          width *
+            (mobile
+              ? .31
+              : .34),
+
+          height *
+            (mobile
+              ? .34
+              : .38)
+
+        );
+
+
+      if (
+        !reducedMotion &&
+        orbitVisible &&
+        !orbitPaused
+      ) {
+
+        const delta =
+          Math.min(
+            time - lastFrame,
+            50
+          );
+
+
+        /*
+          Approximately 26 seconds per revolution.
+        */
+
+        orbitAngle +=
+          delta /
+          26000 *
+          Math.PI *
+          2;
+
+      }
+
+
+      lastFrame =
+        time;
+
+
+      orbitNodes.forEach(
+        (node, index) => {
+
+          const angle =
+            orbitAngles[index] +
+            orbitAngle;
+
+
+          const x =
+            cx +
+            Math.cos(angle) *
+            radius;
+
+
+          const y =
+            cy +
+            Math.sin(angle) *
+            radius;
+
+
+          node.style.left =
+            `${x}px`;
+
+
+          node.style.top =
+            `${y}px`;
+
+
+          const line =
+            orbitLines.find(
+              (item) =>
+                item.dataset.line ===
+                node.dataset.domain
+            );
+
+
+          if (line) {
+
+            line.setAttribute(
+              'x1',
+              cx
+            );
+
+            line.setAttribute(
+              'y1',
+              cy
+            );
+
+            line.setAttribute(
+              'x2',
+              x
+            );
+
+            line.setAttribute(
+              'y2',
+              y
+            );
+
+          }
+
+        }
+      );
+
+
+      if (
+        !reducedMotion &&
+        orbitVisible
+      ) {
+
+        orbitFrame =
+          requestAnimationFrame(
+            updateOrbit
+          );
+
+      } else {
+
+        orbitFrame =
+          null;
+
+      }
+
+    };
+
+
+  if (orbit) {
+
+    const orbitObserver =
+      new IntersectionObserver(
+
+        ([entry]) => {
+
+          orbitVisible =
+            entry.isIntersecting;
+
+
+          if (
+            orbitVisible &&
+            !reducedMotion &&
+            !orbitFrame
+          ) {
+
+            lastFrame =
+              performance.now();
+
+
+            orbitFrame =
+              requestAnimationFrame(
+                updateOrbit
+              );
+
+          }
+
+
+          if (
+            !orbitVisible &&
+            orbitFrame
+          ) {
+
+            cancelAnimationFrame(
+              orbitFrame
+            );
+
+            orbitFrame =
+              null;
+
+          }
+
+        },
+
+        {
+          threshold: 0.08
+        }
+
+      );
+
+
+    orbitObserver.observe(
+      orbit
+    );
+
+
+    orbitNodes.forEach(
+      (node) => {
+
+
+        /*
+          Desktop hover:
+          orbit stops immediately.
+        */
+
+        node.addEventListener(
+          'pointerenter',
+          () => {
+
+            pauseOrbit(
+              node
+            );
+
+          }
+        );
+
+
+        node.addEventListener(
+          'pointerleave',
+          () => {
+
+            if (!orbitPinned) {
+
+              resumeOrbit();
+
             }
-            
-            // Clear input
-            this.value = '';
-            
-            // Scroll to bottom of output
-            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+
+          }
+        );
+
+
+        /*
+          Keyboard:
+          focus also stops the orbit.
+        */
+
+        node.addEventListener(
+          'focus',
+          () => {
+
+            pauseOrbit(
+              node
+            );
+
+          }
+        );
+
+
+        node.addEventListener(
+          'blur',
+          () => {
+
+            if (!orbitPinned) {
+
+              resumeOrbit();
+
+            }
+
+          }
+        );
+
+
+        /*
+          Click/tap pins the node.
+        */
+
+        node.addEventListener(
+          'click',
+          () => {
+
+            if (
+              orbitPinned ===
+              node
+            ) {
+
+              orbitPinned =
+                null;
+
+              resumeOrbit();
+
+              return;
+
+            }
+
+
+            orbitPinned =
+              node;
+
+            pauseOrbit(
+              node
+            );
+
+          }
+        );
+
+
+        /*
+          Escape closes pinned node.
+        */
+
+        node.addEventListener(
+          'keydown',
+          (event) => {
+
+            if (
+              event.key ===
+              'Escape'
+            ) {
+
+              orbitPinned =
+                null;
+
+              resumeOrbit();
+
+              node.blur();
+
+            }
+
+          }
+        );
+
+      }
+    );
+
+
+    updateOrbit(
+      performance.now()
+    );
+
+  }
+
+
+  /* ==========================================================
+     EXPERIENCE TABS
+  ========================================================== */
+
+  const experienceTabs =
+    [
+      ...document.querySelectorAll(
+        '.experience-tab'
+      )
+    ];
+
+
+  const experiencePanels =
+    [
+      ...document.querySelectorAll(
+        '.experience-entry'
+      )
+    ];
+
+
+  const activateExperience =
+    (id) => {
+
+      experienceTabs.forEach(
+        (tab) => {
+
+          const active =
+            tab.dataset.exp ===
+            id;
+
+
+          tab.classList.toggle(
+            'is-active',
+            active
+          );
+
+
+          tab.setAttribute(
+            'aria-selected',
+            String(active)
+          );
+
         }
-    });
-    
-    // Process terminal commands
-    function processCommand(command) {
-        switch(command) {
-            case 'help':
-                return `Available commands:<br>
-                        - about: Display information about me<br>
-                        - skills: List my technical skills<br>
-                        - projects: View my projects<br>
-                        - contact: How to reach me<br>
-                        - clear: Clear the terminal`;
-            case 'about':
-                return `I am an undergraduate pursuing B.Tech in Computer Science and Engineering with a focus on Cybersecurity. Passionate about ethical hacking and penetration testing.`;
-            case 'skills':
-                return `Technical skills:<br>
-                        - Python<br>
-                        - Network Security<br>
-                        - Web Application Security<br>
-                        - Vulnerability Assessment<br>
-                        - Tools: Wireshark, Splunk, Burp Suite, Nmap`;
-            case 'projects':
-                return `Notable projects:<br>
-                        - CyberPandas: AI-powered cybersecurity chatbot<br>
-                        - Network Scanner: Python tool for network scanning<br>
-                        - Wifi-Hacking Tool: Wireless network auditing tool`;
-            case 'contact':
-                return `Email: soumyashree.sahoo.147@gmail.com<br>
-                        Phone: +91 7064584441<br>
-                        GitHub: github.com/soumyass147`;
-            case 'clear':
-                output.innerHTML = '';
-                return null;
-            default:
-                return `Command not found: ${command}. Type 'help' for available commands.`;
+      );
+
+
+      experiencePanels.forEach(
+        (panel) => {
+
+          panel.classList.toggle(
+            'is-active',
+
+            panel.dataset
+              .expPanel ===
+              id
+          );
+
         }
+      );
+
+    };
+
+
+  experienceTabs.forEach(
+    (tab) => {
+
+      tab.addEventListener(
+        'click',
+        () => {
+
+          activateExperience(
+            tab.dataset.exp
+          );
+
+        }
+      );
+
     }
-}
+  );
 
 
-document.addEventListener('DOMContentLoaded', initTerminalLoader);
+  /* ==========================================================
+     RESEARCH
+  ========================================================== */
+
+  const writeupList =
+    document.querySelector(
+      '#writeup-list'
+    );
+
+
+  const escapeHtml =
+    (value = '') =>
+      String(value)
+
+        .replaceAll(
+          '&',
+          '&amp;'
+        )
+
+        .replaceAll(
+          '<',
+          '&lt;'
+        )
+
+        .replaceAll(
+          '>',
+          '&gt;'
+        )
+
+        .replaceAll(
+          '"',
+          '&quot;'
+        )
+
+        .replaceAll(
+          "'",
+          '&#039;'
+        );
+
+
+  const renderResearch =
+    (items) => {
+
+      if (!writeupList) {
+        return;
+      }
+
+
+      if (!items.length) {
+
+        writeupList.innerHTML = `
+
+          <div class="research-empty">
+
+            <strong>
+              No public write-ups pinned yet.
+            </strong>
+
+            <br>
+
+            Add your best HTB links to
+            <code>pinnedWriteups</code>
+            in script.js, or connect
+            <code>/api/portfolio/research</code>
+            for automatic updates.
+
+          </div>
+
+        `;
+
+        return;
+
+      }
+
+
+      writeupList.innerHTML =
+        items
+          .slice(0, 3)
+          .map(
+            (item, index) => `
+
+              <a
+                class="writeup-card"
+                href="${escapeHtml(item.url)}"
+                target="_blank"
+                rel="noreferrer"
+              >
+
+                <span class="writeup-number">
+                  0${index + 1}
+                </span>
+
+                <div>
+
+                  <h3>
+                    ${escapeHtml(item.title)}
+                  </h3>
+
+                  <p>
+                    ${escapeHtml(
+                      item.summary ||
+                      'Security write-up / research note.'
+                    )}
+                  </p>
+
+                  <div class="writeup-meta">
+
+                    ${escapeHtml(
+                      item.source ||
+                      'Research'
+                    )}
+
+                    ·
+
+                    ${escapeHtml(
+                      item.date ||
+                      ''
+                    )}
+
+                  </div>
+
+                </div>
+
+                <span class="text-link">
+                  Read ↗
+                </span>
+
+              </a>
+
+            `
+          )
+          .join('');
+
+    };
+
+
+  /* ==========================================================
+     GENERIC JSON FETCH
+  ========================================================== */
+
+  const fetchJson =
+    async (
+      url,
+      options = {}
+    ) => {
+
+      try {
+
+        const response =
+          await fetch(
+            url,
+            {
+              ...options,
+
+              headers: {
+                Accept:
+                  'application/json',
+
+                ...(options.headers || {})
+              }
+
+            }
+          );
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            `HTTP ${response.status}`
+          );
+
+        }
+
+
+        return await response.json();
+
+      } catch {
+
+        return null;
+
+      }
+
+    };
+
+
+  /* ==========================================================
+     STATS API
+  ========================================================== */
+
+  const normalizeStats =
+    (data) => {
+
+      if (
+        !data ||
+        typeof data !== 'object'
+      ) {
+
+        return;
+
+      }
+
+
+      Object.keys(
+        siteData.stats
+      ).forEach(
+        (key) => {
+
+          if (
+            data[key] !==
+              undefined &&
+            data[key] !==
+              null
+          ) {
+
+            siteData.stats[key] =
+              data[key];
+
+          }
+
+        }
+      );
+
+
+      renderProofStrip();
+
+
+      if (statsAnimated) {
+
+        counterNodes.forEach(
+          (node) => {
+
+            animateCounter(
+              node,
+
+              siteData.stats[
+                node.dataset.count
+              ],
+
+              700
+            );
+
+          }
+        );
+
+      }
+
+    };
+
+
+  const loadStats =
+    async () => {
+
+      const data =
+        await fetchJson(
+          `${window.PORTFOLIO_API}/stats`
+        );
+
+
+      normalizeStats(
+        data
+      );
+
+    };
+
+
+  /* ==========================================================
+     MEDIUM RSS
+  ========================================================== */
+
+  const fetchMediumFeed =
+    async (
+      feedUrl
+    ) => {
+
+      const proxy =
+        `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
+
+
+      const data =
+        await fetchJson(
+          proxy
+        );
+
+
+      if (!data?.items) {
+        return [];
+      }
+
+
+      return data.items.map(
+        (item) => ({
+
+          source:
+            'Medium',
+
+          date:
+            item.pubDate
+              ? new Date(
+                  item.pubDate
+                ).getFullYear()
+              : '',
+
+          title:
+            item.title,
+
+          summary:
+            String(
+              item.description || ''
+            )
+              .replace(
+                /<[^>]*>/g,
+                ''
+              )
+              .slice(
+                0,
+                160
+              ),
+
+          url:
+            item.link
+
+        })
+      );
+
+    };
+
+
+  /* ==========================================================
+     RESEARCH API
+  ========================================================== */
+
+  const loadResearch =
+    async () => {
+
+      const apiData =
+        await fetchJson(
+          `${window.PORTFOLIO_API}/research`
+        );
+
+
+      const apiItems =
+        Array.isArray(apiData)
+          ? apiData
+          : Array.isArray(
+              apiData?.items
+            )
+            ? apiData.items
+            : [];
+
+
+      const mediumItems =
+        (
+          await Promise.all(
+
+            siteData.mediumFeeds
+              .filter(Boolean)
+              .map(
+                fetchMediumFeed
+              )
+
+          )
+        ).flat();
+
+
+      const merged = [
+
+        ...siteData.pinnedWriteups,
+
+        ...siteData.localResearch,
+
+        ...apiItems,
+
+        ...mediumItems
+
+      ];
+
+
+      const unique =
+        merged.filter(
+          (item, index, list) =>
+
+            item?.url &&
+            list.findIndex(
+              (other) =>
+                other.url ===
+                item.url
+            ) === index
+        );
+
+
+      renderResearch(
+        unique
+      );
+
+    };
+
+
+  renderResearch(
+    siteData.pinnedWriteups
+  );
+
+
+  loadStats();
+
+  loadResearch();
+
+
+  /* ==========================================================
+     CONTACT FORM
+  ========================================================== */
+
+  const form =
+    document.querySelector(
+      '#contact-form'
+    );
+
+
+  const formStatus =
+    document.querySelector(
+      '#form-status'
+    );
+
+
+  form?.addEventListener(
+    'submit',
+    (event) => {
+
+      event.preventDefault();
+
+
+      const data =
+        new FormData(form);
+
+
+      const subject =
+        encodeURIComponent(
+
+          `[Portfolio] ${
+            data.get('intent')
+          } — ${
+            data.get('name')
+          }`
+
+        );
+
+
+      const body =
+        encodeURIComponent(
+
+          `Hi Soumyashree,
+
+Reason: ${
+            data.get('intent')
+          }
+
+${
+            data.get('message')
+          }
+
+My email: ${
+            data.get('email')
+          }`
+
+        );
+
+
+      window.location.href =
+        `mailto:soumyashree.sahoo.147@gmail.com?subject=${subject}&body=${body}`;
+
+
+      if (formStatus) {
+
+        formStatus.textContent =
+          'Your email client is ready with the message drafted.';
+
+      }
+
+    }
+  );
+
+
+  /* ==========================================================
+     YEAR
+  ========================================================== */
+
+  const year =
+    document.querySelector(
+      '#year'
+    );
+
+
+  if (year) {
+
+    year.textContent =
+      new Date().getFullYear();
+
+  }
+
+})();
