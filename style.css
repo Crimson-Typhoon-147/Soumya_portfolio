@@ -960,11 +960,7 @@ body.grid-active .ambient-grid {
    ABOUT
 ========================================================= */
 
-.compact-section {
-  padding: 112px 0;
-}
 
-.about-grid,
 .cert-layout,
 .skills-layout {
   display: grid;
@@ -2018,6 +2014,11 @@ body.grid-active .ambient-grid {
   stroke-width: 1.5;
 }
 
+
+/* =========================================================
+   ORBIT CORE
+========================================================= */
+
 .orbit-core {
   position: absolute;
 
@@ -2081,6 +2082,11 @@ body.grid-active .ambient-grid {
   font-size: 8px;
 }
 
+
+/* =========================================================
+   ORBIT NODES
+========================================================= */
+
 .orbit-node {
   position: absolute;
 
@@ -2088,8 +2094,15 @@ body.grid-active .ambient-grid {
   top: 50%;
 
   width: 112px;
+  height: 78px;
 
+  min-width: 112px;
   min-height: 78px;
+
+  max-width: 112px;
+  max-height: 78px;
+
+  box-sizing: border-box;
 
   transform:
     translate(-50%,-50%);
@@ -2117,8 +2130,6 @@ body.grid-active .ambient-grid {
   justify-content: center;
 
   transition:
-    width .3s ease,
-    min-height .3s ease,
     background .3s ease,
     border-color .3s ease,
     box-shadow .3s ease;
@@ -2129,6 +2140,8 @@ body.grid-active .ambient-grid {
     700 11px var(--display);
 
   letter-spacing: .09em;
+
+  flex-shrink: 0;
 }
 
 .orbit-node small {
@@ -2137,18 +2150,34 @@ body.grid-active .ambient-grid {
   color: var(--muted);
 
   font-size: 8px;
+
+  flex-shrink: 0;
 }
 
+
+/* =========================================================
+   ORBIT DETAIL
+   Detail is positioned outside the card so it cannot
+   increase the card's height.
+========================================================= */
+
 .orbit-detail {
-  display: grid;
+  position: absolute;
 
-  grid-template-rows: 0fr;
+  left: 50%;
 
-  overflow: hidden;
+  top: calc(100% + 8px);
 
-  opacity: 0;
+  transform:
+    translateX(-50%);
 
-  max-width: 230px;
+  width: 190px;
+
+  max-width: 190px;
+
+  padding: 0;
+
+  box-sizing: border-box;
 
   color: var(--soft);
 
@@ -2158,26 +2187,43 @@ body.grid-active .ambient-grid {
 
   text-align: center;
 
+  opacity: 0;
+
+  visibility: hidden;
+
+  pointer-events: none;
+
+  overflow: hidden;
+
   transition:
-    grid-template-rows .3s ease,
     opacity .2s ease,
-    margin .3s ease;
+    visibility .2s ease;
 }
 
 .orbit-detail:after {
-  content: '';
-
-  min-height: 0;
+  content: none;
 }
+
+
+/* =========================================================
+   NODE HOVER / ACTIVE
+========================================================= */
 
 .orbit-node:hover,
 .orbit-node:focus-visible,
 .orbit-node.is-active {
-  width: 255px;
 
-  min-height: 150px;
+  width: 112px;
+  height: 78px;
 
-  background: #0d1b24;
+  min-width: 112px;
+  min-height: 78px;
+
+  max-width: 112px;
+  max-height: 78px;
+
+  background:
+    #0d1b24;
 
   border-color:
     rgba(99,230,242,.7);
@@ -2189,15 +2235,24 @@ body.grid-active .ambient-grid {
   outline: none;
 }
 
+
+/* =========================================================
+   SHOW DETAIL WITHOUT RESIZING NODE
+========================================================= */
+
 .orbit-node:hover .orbit-detail,
 .orbit-node:focus-visible .orbit-detail,
 .orbit-node.is-active .orbit-detail {
-  grid-template-rows: 1fr;
 
   opacity: 1;
 
-  margin-top: 11px;
+  visibility: visible;
 }
+
+
+/* =========================================================
+   ORBIT PULSE
+========================================================= */
 
 .orbit-pulse {
   position: absolute;
@@ -2212,10 +2267,12 @@ body.grid-active .ambient-grid {
 
   border-radius: 50%;
 
-  background: var(--cyan);
+  background:
+    var(--cyan);
 
   box-shadow:
-    0 0 14px var(--cyan);
+    0 0 14px
+    var(--cyan);
 
   animation:
     orbitPulse 8s linear infinite;
