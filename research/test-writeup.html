@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="theme-color" content="#080e14">
+
+  <title>Testing JWT Authentication — Crimson Typhoon</title>
+
+  <meta
+    name="description"
+    content="A test write-up demonstrating local Markdown integration with the portfolio."
+  >
+
+  <style>
+
+    :root {
+      --bg: #080e14;
+      --text: #edf3f6;
+      --soft: #91a1ad;
+      --muted: #637480;
+      --line: rgba(255,255,255,.10);
+      --accent: #55e6ed;
+      --purple: #a18aff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.75;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .article-shell {
+      width: min(900px, calc(100% - 44px));
+      margin: 0 auto;
+      padding: 55px 0 90px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 75px;
+    }
+
+    .brand {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+
+    .brand span {
+      color: var(--accent);
+    }
+
+    .back {
+      color: var(--soft);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    .back:hover,
+    .back-bottom:hover {
+      color: var(--accent);
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+    }
+
+    .category {
+      display: inline-block;
+      color: var(--purple);
+      border: 1px solid rgba(161,138,255,.25);
+      background: rgba(161,138,255,.06);
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      margin-bottom: 24px;
+    }
+
+    .article-title {
+      font-size: clamp(36px, 7vw, 68px);
+      line-height: 1.08;
+      letter-spacing: -.055em;
+      font-weight: 650;
+      margin: 0 0 25px;
+    }
+
+    .summary {
+      color: var(--soft);
+      font-size: 17px;
+      line-height: 1.8;
+      max-width: 720px;
+      margin-bottom: 28px;
+    }
+
+    .metadata {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .article-divider {
+      height: 1px;
+      background: var(--line);
+      margin: 55px 0;
+    }
+
+    .content {
+      font-size: 16px;
+      line-height: 1.9;
+      color: #c5d0d7;
+      overflow-wrap: anywhere;
+    }
+
+    .content h1,
+    .content h2,
+    .content h3 {
+      color: var(--text);
+      line-height: 1.3;
+      letter-spacing: -.025em;
+      margin: 50px 0 20px;
+    }
+
+    .content h1 {
+      font-size: 34px;
+    }
+
+    .content h2 {
+      font-size: 27px;
+    }
+
+    .content h3 {
+      font-size: 21px;
+    }
+
+    .content p {
+      margin: 0 0 24px;
+    }
+
+    .content a {
+      color: var(--accent);
+      text-underline-offset: 4px;
+    }
+
+    .content ul {
+      padding-left: 24px;
+      margin-bottom: 28px;
+    }
+
+    .content li {
+      padding-left: 5px;
+      margin-bottom: 10px;
+    }
+
+    .content blockquote {
+      border-left: 2px solid var(--accent);
+      background: rgba(85,230,237,.035);
+      margin: 32px 0;
+      padding: 18px 24px;
+      color: var(--soft);
+    }
+
+    .content code {
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 3px 6px;
+      color: var(--accent);
+      font-size: .88em;
+    }
+
+    .content pre {
+      background: #050a0f;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 22px;
+      overflow-x: auto;
+      margin: 32px 0;
+      line-height: 1.65;
+    }
+
+    .content pre code {
+      background: transparent;
+      border: 0;
+      padding: 0;
+      color: #dce6eb;
+      font-size: 13px;
+    }
+
+    .article-footer {
+      border-top: 1px solid var(--line);
+      margin-top: 75px;
+      padding-top: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .footer-label {
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .footer-name {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 5px;
+    }
+
+    .back-bottom {
+      color: var(--accent);
+      font-size: 12px;
+      text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+
+      .article-shell {
+        padding-top: 30px;
+      }
+
+      .topbar {
+        margin-bottom: 55px;
+      }
+
+      .article-title {
+        font-size: 39px;
+      }
+
+      .summary,
+      .content {
+        font-size: 15px;
+      }
+
+      .article-footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <main class="article-shell">
+
+    <header class="topbar">
+
+      <a class="brand" href="/">
+        CRIMSON <span>TYPHOON</span>
+      </a>
+
+      <a class="back" href="/">
+        ← Back to portfolio
+      </a>
+
+    </header>
+
+    <article>
+
+      <div class="eyebrow">
+        OFFENSIVE SECURITY / FIELD NOTES
+      </div>
+
+      <div class="category">
+        WEB SECURITY
+      </div>
+
+      <h1 class="article-title">
+        Testing JWT Authentication
+      </h1>
+
+      <p class="summary">
+        A test write-up demonstrating local Markdown integration with the portfolio.
+      </p>
+
+      <div class="metadata">
+
+        <span>
+          Local
+        </span>
+
+        <span>
+          2026-11-03
+        </span>
+
+      </div>
+
+      <div class="article-divider"></div>
+
+      <div class="content">
+        <h1>Testing JWT Authentication</h1>
+<p>This is a test article for my cybersecurity portfolio.</p>
+<h2>Testing Approach</h2>
+<p>Examining JWT authentication and authorization mechanisms.</p>
+<h2>Findings</h2>
+<p>This article verifies that Markdown content can be converted into an HTML page automatically.</p>
+      </div>
+
+    </article>
+
+    <footer class="article-footer">
+
+      <div>
+
+        <div class="footer-label">
+          DOCUMENTED BY
+        </div>
+
+        <div class="footer-name">
+          Soumyashree Sahoo · Crimson Typhoon
+        </div>
+
+      </div>
+
+      <a class="back-bottom" href="/">
+        Return to portfolio ↗
+      </a>
+
+    </footer>
+
+  </main>
+
+</body>
+
+</html>

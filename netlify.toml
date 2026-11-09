@@ -1,0 +1,13 @@
+
+[build]
+  command = "npm run build"
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/portfolio/stats"
+  to = "/.netlify/functions/portfolio-stats"
+  status = 200

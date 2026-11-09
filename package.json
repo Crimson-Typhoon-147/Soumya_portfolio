@@ -1,0 +1,11 @@
+{
+  "name": "soumyashree-portfolio",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-research.js",
+    "dev": "netlify dev"
+  },
+  "devDependencies": {
+    "netlify-cli": "^27.16.2"
+  }
+}

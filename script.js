@@ -1,3 +1,4 @@
+
 /*
   ============================================================
   CRIMSON TYPHOON PORTFOLIO CONTROLLER
@@ -47,13 +48,6 @@ window.PORTFOLIO_API =
 
 const siteData = {
 
-  /*
-    Safe fallback values.
-
-    Replace these only if you want static fallback numbers.
-    Normally your backend endpoint should overwrite them.
-  */
-
   stats: {
 
     ctfs: 0,
@@ -71,61 +65,15 @@ const siteData = {
   },
 
 
-  /*
-    PINNED HTB WRITE-UPS
-
-    Add your best 2–3 write-ups here.
-
-    Example:
-
-    {
-      source: 'HTB',
-      date: '2026',
-      title: 'Box Name — Initial Access',
-      summary: 'Short description.',
-      url: 'https://...'
-    }
-  */
-
   pinnedWriteups: [],
 
-
-  /*
-    CUSTOM ARTICLES
-
-    These are articles that you publish directly on
-    your own portfolio instead of Medium.
-
-    Example:
-
-    {
-      source: 'CRIMSON TYPHOON',
-      date: '2026',
-      title: 'Understanding OTP Abuse',
-      summary: 'A practical analysis...',
-      url: '/research/otp-abuse.html'
-    }
-  */
 
   localResearch: [],
 
 
-  /*
-    PUBLIC MEDIUM RSS FEEDS
-
-    Current known Medium account:
-
-      @crimsontyphoon
-
-    Add the second account when you have its username.
-  */
-
   mediumFeeds: [
 
     'https://medium.com/feed/@crimsontyphoon'
-
-    // Example:
-    // 'https://medium.com/feed/@YOUR_SECOND_MEDIUM_USERNAME'
 
   ]
 
@@ -239,9 +187,7 @@ const siteData = {
 
     revealItems.forEach((item) => {
 
-      item.classList.add(
-        'is-visible'
-      );
+      item.classList.add('is-visible');
 
     });
 
@@ -250,15 +196,6 @@ const siteData = {
 
   /* ==========================================================
      REFERENCE-STYLE CHECKER GRID
-  ==========================================================
-
-  The grid is intentionally very faint.
-
-  When a content section becomes the active viewport area,
-  the grid becomes slightly more visible.
-
-  This gives the "appears when the section is highlighted"
-  effect without copying the reference website.
   ========================================================== */
 
   const gridSections =
@@ -276,8 +213,7 @@ const siteData = {
 
           const visible =
             entries.some(
-              (entry) =>
-                entry.isIntersecting
+              (entry) => entry.isIntersecting
             );
 
           document.body.classList.toggle(
@@ -308,9 +244,7 @@ const siteData = {
   ========================================================== */
 
   const counterNodes =
-    [...document.querySelectorAll(
-      '[data-count]'
-    )];
+    [...document.querySelectorAll('[data-count]')];
 
 
   const formatNumber = (value) => {
@@ -325,8 +259,7 @@ const siteData = {
     }
 
 
-    const number =
-      Number(value);
+    const number = Number(value);
 
 
     return Number.isFinite(number)
@@ -336,99 +269,128 @@ const siteData = {
   };
 
 
-  const animateCounter =
-    (
-      element,
-      target,
-      duration = 1300
-    ) => {
+  // Track active animations to prevent stale frames
+  // from overwriting newer API values.
+  const counterAnimations = new WeakMap();
 
-      if (
-        typeof target === 'string' ||
-        !Number.isFinite(
-          Number(target)
-        )
-      ) {
 
-        element.textContent =
-          target ?? '—';
+  const animateCounter = (
+    element,
+    target,
+    duration = 1300
+  ) => {
 
-        return;
+    // Cancel the previous animation for this element.
+    const previousFrame =
+      counterAnimations.get(element);
+
+    if (previousFrame !== undefined) {
+
+      cancelAnimationFrame(previousFrame);
+
+      counterAnimations.delete(element);
+
+    }
+
+
+    // Optional suffix, for example data-suffix="+"
+    const suffix =
+      element.dataset.suffix || '';
+
+
+    // Handle unavailable or non-numeric values.
+    if (
+      typeof target === 'string' ||
+      !Number.isFinite(Number(target))
+    ) {
+
+      element.textContent =
+        (target ?? '—') + suffix;
+
+      return;
+
+    }
+
+
+    const end = Number(target);
+
+
+    if (reducedMotion) {
+
+      element.textContent =
+        formatNumber(end) + suffix;
+
+      return;
+
+    }
+
+
+    const start = performance.now();
+
+    const from = 0;
+
+
+    const tick = (now) => {
+
+      const progress =
+        Math.min(
+          (now - start) / duration,
+          1
+        );
+
+
+      const eased =
+        1 -
+        Math.pow(
+          1 - progress,
+          3
+        );
+
+
+      element.textContent =
+        formatNumber(
+          Math.round(
+            from +
+            (end - from) * eased
+          )
+        ) + suffix;
+
+
+      if (progress < 1) {
+
+        const frameId =
+          requestAnimationFrame(tick);
+
+        counterAnimations.set(
+          element,
+          frameId
+        );
+
+      } else {
+
+        counterAnimations.delete(element);
 
       }
-
-
-      const end =
-        Number(target);
-
-
-      if (reducedMotion) {
-
-        element.textContent =
-          formatNumber(end);
-
-        return;
-
-      }
-
-
-      const start =
-        performance.now();
-
-
-      const from = 0;
-
-
-      const tick = (now) => {
-
-        const progress =
-          Math.min(
-            (now - start) / duration,
-            1
-          );
-
-
-        const eased =
-          1 -
-          Math.pow(
-            1 - progress,
-            3
-          );
-
-
-        element.textContent =
-          formatNumber(
-            Math.round(
-              from +
-              (end - from) *
-              eased
-            )
-          );
-
-
-        if (progress < 1) {
-
-          requestAnimationFrame(
-            tick
-          );
-
-        }
-
-      };
-
-
-      requestAnimationFrame(tick);
 
     };
+
+
+    const frameId =
+      requestAnimationFrame(tick);
+
+    counterAnimations.set(
+      element,
+      frameId
+    );
+
+  };
 
 
   let statsAnimated = false;
 
 
   const statsSection =
-    document.querySelector(
-      '#practice'
-    );
+    document.querySelector('#practice');
 
 
   const runStatsAnimation = () => {
@@ -445,9 +407,7 @@ const siteData = {
 
       animateCounter(
         node,
-        siteData.stats[
-          node.dataset.count
-        ]
+        siteData.stats[node.dataset.count]
       );
 
     });
@@ -482,9 +442,7 @@ const siteData = {
       );
 
 
-    statsObserver.observe(
-      statsSection
-    );
+    statsObserver.observe(statsSection);
 
   } else {
 
@@ -496,15 +454,11 @@ const siteData = {
   const renderProofStrip = () => {
 
     document
-      .querySelectorAll(
-        '.proof-item [data-count]'
-      )
+      .querySelectorAll('.proof-item [data-count]')
       .forEach((node) => {
 
         const value =
-          siteData.stats[
-            node.dataset.count
-          ];
+          siteData.stats[node.dataset.count];
 
         node.textContent =
           formatNumber(value);
@@ -522,57 +476,33 @@ const siteData = {
   ========================================================== */
 
   const orbit =
-    document.querySelector(
-      '#security-orbit'
-    );
+    document.querySelector('#security-orbit');
 
 
-  const orbitNodes =
-    [
-      ...document.querySelectorAll(
-        '.orbit-node'
-      )
-    ];
+  const orbitNodes = [
+    ...document.querySelectorAll('.orbit-node')
+  ];
 
 
-  const orbitLines =
-    [
-      ...document.querySelectorAll(
-        '.orbit-connections line'
-      )
-    ];
+  const orbitLines = [
+    ...document.querySelectorAll(
+      '.orbit-connections line'
+    )
+  ];
 
 
-  let orbitAngle =
-    -Math.PI / 2;
+  let orbitAngle = -Math.PI / 2;
 
+  let orbitVisible = false;
 
-  let orbitVisible =
-    false;
+  let orbitPaused = false;
 
+  let orbitPinned = null;
 
-  let orbitPaused =
-    false;
+  let orbitFrame = null;
 
+  let lastFrame = performance.now();
 
-  let orbitPinned =
-    null;
-
-
-  let orbitFrame =
-    null;
-
-
-  let lastFrame =
-    performance.now();
-
-
-  /*
-    Six nodes around the orbit.
-
-    Labels stay upright because we move each node's
-    position using JS instead of rotating the node itself.
-  */
 
   const orbitAngles = [
 
@@ -595,17 +525,40 @@ const siteData = {
 
     orbitNodes.forEach((node) => {
 
-      node.classList.remove(
-        'is-active'
-      );
+      node.classList.remove('is-active');
 
     });
 
 
     orbitLines.forEach((line) => {
 
-      line.classList.remove(
-        'active'
+      line.classList.remove('active');
+
+    });
+
+  };
+
+
+  const setOrbitActive = (
+    node,
+    active
+  ) => {
+
+    node.classList.toggle(
+      'is-active',
+      active
+    );
+
+
+    const domain = node.dataset.domain;
+
+
+    orbitLines.forEach((line) => {
+
+      line.classList.toggle(
+        'active',
+        active &&
+        line.dataset.line === domain
       );
 
     });
@@ -613,55 +566,20 @@ const siteData = {
   };
 
 
-  const setOrbitActive =
-    (
-      node,
-      active
-    ) => {
+  const pauseOrbit = (node = null) => {
 
-      node.classList.toggle(
-        'is-active',
-        active
-      );
+    orbitPaused = true;
+
+    clearOrbitActive();
 
 
-      const domain =
-        node.dataset.domain;
+    if (node) {
 
+      setOrbitActive(node, true);
 
-      orbitLines.forEach((line) => {
+    }
 
-        line.classList.toggle(
-          'active',
-
-          active &&
-          line.dataset.line ===
-            domain
-        );
-
-      });
-
-    };
-
-
-  const pauseOrbit =
-    (node = null) => {
-
-      orbitPaused = true;
-
-      clearOrbitActive();
-
-
-      if (node) {
-
-        setOrbitActive(
-          node,
-          true
-        );
-
-      }
-
-    };
+  };
 
 
   const resumeOrbit = () => {
@@ -678,166 +596,113 @@ const siteData = {
   };
 
 
-  const updateOrbit =
-    (time) => {
+  const updateOrbit = (time) => {
 
-      if (!orbit) {
-        return;
-      }
-
-
-      const rect =
-        orbit.getBoundingClientRect();
+    if (!orbit) {
+      return;
+    }
 
 
-      const width =
-        rect.width;
+    const rect =
+      orbit.getBoundingClientRect();
 
 
-      const height =
-        rect.height;
+    const width = rect.width;
+
+    const height = rect.height;
+
+    const cx = width / 2;
+
+    const cy = height / 2;
+
+    const mobile = width < 680;
 
 
-      const cx =
-        width / 2;
-
-
-      const cy =
-        height / 2;
-
-
-      const mobile =
-        width < 680;
-
-
-      const radius =
-        Math.min(
-
-          width *
-            (mobile
-              ? .31
-              : .34),
-
-          height *
-            (mobile
-              ? .34
-              : .38)
-
-        );
-
-
-      if (
-        !reducedMotion &&
-        orbitVisible &&
-        !orbitPaused
-      ) {
-
-        const delta =
-          Math.min(
-            time - lastFrame,
-            50
-          );
-
-
-        /*
-          Approximately 26 seconds per revolution.
-        */
-
-        orbitAngle +=
-          delta /
-          26000 *
-          Math.PI *
-          2;
-
-      }
-
-
-      lastFrame =
-        time;
-
-
-      orbitNodes.forEach(
-        (node, index) => {
-
-          const angle =
-            orbitAngles[index] +
-            orbitAngle;
-
-
-          const x =
-            cx +
-            Math.cos(angle) *
-            radius;
-
-
-          const y =
-            cy +
-            Math.sin(angle) *
-            radius;
-
-
-          node.style.left =
-            `${x}px`;
-
-
-          node.style.top =
-            `${y}px`;
-
-
-          const line =
-            orbitLines.find(
-              (item) =>
-                item.dataset.line ===
-                node.dataset.domain
-            );
-
-
-          if (line) {
-
-            line.setAttribute(
-              'x1',
-              cx
-            );
-
-            line.setAttribute(
-              'y1',
-              cy
-            );
-
-            line.setAttribute(
-              'x2',
-              x
-            );
-
-            line.setAttribute(
-              'y2',
-              y
-            );
-
-          }
-
-        }
+    const radius =
+      Math.min(
+        width * (mobile ? .31 : .34),
+        height * (mobile ? .34 : .38)
       );
 
 
-      if (
-        !reducedMotion &&
-        orbitVisible
-      ) {
+    if (
+      !reducedMotion &&
+      orbitVisible &&
+      !orbitPaused
+    ) {
 
-        orbitFrame =
-          requestAnimationFrame(
-            updateOrbit
-          );
+      const delta =
+        Math.min(
+          time - lastFrame,
+          50
+        );
 
-      } else {
 
-        orbitFrame =
-          null;
+      orbitAngle +=
+        delta / 26000 * Math.PI * 2;
+
+    }
+
+
+    lastFrame = time;
+
+
+    orbitNodes.forEach((node, index) => {
+
+      const angle =
+        orbitAngles[index] + orbitAngle;
+
+
+      const x =
+        cx + Math.cos(angle) * radius;
+
+
+      const y =
+        cy + Math.sin(angle) * radius;
+
+
+      node.style.left = `${x}px`;
+
+      node.style.top = `${y}px`;
+
+
+      const line =
+        orbitLines.find(
+          (item) =>
+            item.dataset.line === node.dataset.domain
+        );
+
+
+      if (line) {
+
+        line.setAttribute('x1', cx);
+
+        line.setAttribute('y1', cy);
+
+        line.setAttribute('x2', x);
+
+        line.setAttribute('y2', y);
 
       }
 
-    };
+    });
+
+
+    if (
+      !reducedMotion &&
+      orbitVisible
+    ) {
+
+      orbitFrame =
+        requestAnimationFrame(updateOrbit);
+
+    } else {
+
+      orbitFrame = null;
+
+    }
+
+  };
 
 
   if (orbit) {
@@ -847,8 +712,7 @@ const siteData = {
 
         ([entry]) => {
 
-          orbitVisible =
-            entry.isIntersecting;
+          orbitVisible = entry.isIntersecting;
 
 
           if (
@@ -857,14 +721,10 @@ const siteData = {
             !orbitFrame
           ) {
 
-            lastFrame =
-              performance.now();
-
+            lastFrame = performance.now();
 
             orbitFrame =
-              requestAnimationFrame(
-                updateOrbit
-              );
+              requestAnimationFrame(updateOrbit);
 
           }
 
@@ -874,12 +734,9 @@ const siteData = {
             orbitFrame
           ) {
 
-            cancelAnimationFrame(
-              orbitFrame
-            );
+            cancelAnimationFrame(orbitFrame);
 
-            orbitFrame =
-              null;
+            orbitFrame = null;
 
           }
 
@@ -892,143 +749,91 @@ const siteData = {
       );
 
 
-    orbitObserver.observe(
-      orbit
-    );
+    orbitObserver.observe(orbit);
 
 
-    orbitNodes.forEach(
-      (node) => {
+    orbitNodes.forEach((node) => {
+
+      node.addEventListener(
+        'pointerenter',
+        () => pauseOrbit(node)
+      );
 
 
-        /*
-          Desktop hover:
-          orbit stops immediately.
-        */
+      node.addEventListener(
+        'pointerleave',
+        () => {
 
-        node.addEventListener(
-          'pointerenter',
-          () => {
+          if (!orbitPinned) {
+            resumeOrbit();
+          }
 
-            pauseOrbit(
-              node
-            );
+        }
+      );
+
+
+      node.addEventListener(
+        'focus',
+        () => pauseOrbit(node)
+      );
+
+
+      node.addEventListener(
+        'blur',
+        () => {
+
+          if (!orbitPinned) {
+            resumeOrbit();
+          }
+
+        }
+      );
+
+
+      node.addEventListener(
+        'click',
+        () => {
+
+          if (orbitPinned === node) {
+
+            orbitPinned = null;
+
+            resumeOrbit();
+
+            return;
 
           }
-        );
 
 
-        node.addEventListener(
-          'pointerleave',
-          () => {
+          orbitPinned = node;
 
-            if (!orbitPinned) {
+          pauseOrbit(node);
 
-              resumeOrbit();
-
-            }
-
-          }
-        );
+        }
+      );
 
 
-        /*
-          Keyboard:
-          focus also stops the orbit.
-        */
+      node.addEventListener(
+        'keydown',
+        (event) => {
 
-        node.addEventListener(
-          'focus',
-          () => {
+          if (event.key === 'Escape') {
 
-            pauseOrbit(
-              node
-            );
+            orbitPinned = null;
+
+            resumeOrbit();
+
+            node.blur();
 
           }
-        );
+
+        }
+      );
+
+    });
 
 
-        node.addEventListener(
-          'blur',
-          () => {
-
-            if (!orbitPinned) {
-
-              resumeOrbit();
-
-            }
-
-          }
-        );
-
-
-        /*
-          Click/tap pins the node.
-        */
-
-        node.addEventListener(
-          'click',
-          () => {
-
-            if (
-              orbitPinned ===
-              node
-            ) {
-
-              orbitPinned =
-                null;
-
-              resumeOrbit();
-
-              return;
-
-            }
-
-
-            orbitPinned =
-              node;
-
-            pauseOrbit(
-              node
-            );
-
-          }
-        );
-
-
-        /*
-          Escape closes pinned node.
-        */
-
-        node.addEventListener(
-          'keydown',
-          (event) => {
-
-            if (
-              event.key ===
-              'Escape'
-            ) {
-
-              orbitPinned =
-                null;
-
-              resumeOrbit();
-
-              node.blur();
-
-            }
-
-          }
-        );
-
-      }
-    );
-
-
-    updateOrbit(
-      performance.now()
-    );
+    updateOrbit(performance.now());
 
   }
 
@@ -1037,81 +842,64 @@ const siteData = {
      EXPERIENCE TABS
   ========================================================== */
 
-  const experienceTabs =
-    [
-      ...document.querySelectorAll(
-        '.experience-tab'
-      )
-    ];
+  const experienceTabs = [
+    ...document.querySelectorAll('.experience-tab')
+  ];
 
 
-  const experiencePanels =
-    [
-      ...document.querySelectorAll(
-        '.experience-entry'
-      )
-    ];
+  const experiencePanels = [
+    ...document.querySelectorAll('.experience-entry')
+  ];
 
 
-  const activateExperience =
-    (id) => {
+  const activateExperience = (id) => {
 
-      experienceTabs.forEach(
-        (tab) => {
+    experienceTabs.forEach((tab) => {
 
-          const active =
-            tab.dataset.exp ===
-            id;
+      const active =
+        tab.dataset.exp === id;
 
 
-          tab.classList.toggle(
-            'is-active',
-            active
-          );
-
-
-          tab.setAttribute(
-            'aria-selected',
-            String(active)
-          );
-
-        }
+      tab.classList.toggle(
+        'is-active',
+        active
       );
 
 
-      experiencePanels.forEach(
-        (panel) => {
-
-          panel.classList.toggle(
-            'is-active',
-
-            panel.dataset
-              .expPanel ===
-              id
-          );
-
-        }
+      tab.setAttribute(
+        'aria-selected',
+        String(active)
       );
 
-    };
+    });
 
 
-  experienceTabs.forEach(
-    (tab) => {
+    experiencePanels.forEach((panel) => {
 
-      tab.addEventListener(
-        'click',
-        () => {
-
-          activateExperience(
-            tab.dataset.exp
-          );
-
-        }
+      panel.classList.toggle(
+        'is-active',
+        panel.dataset.expPanel === id
       );
 
-    }
-  );
+    });
+
+  };
+
+
+  experienceTabs.forEach((tab) => {
+
+    tab.addEventListener(
+      'click',
+      () => {
+
+        activateExperience(
+          tab.dataset.exp
+        );
+
+      }
+    );
+
+  });
 
 
   /* ==========================================================
@@ -1119,398 +907,423 @@ const siteData = {
   ========================================================== */
 
   const writeupList =
-    document.querySelector(
-      '#writeup-list'
-    );
+    document.querySelector('#writeup-list');
 
 
-  const escapeHtml =
-    (value = '') =>
-      String(value)
+  const escapeHtml = (value = '') =>
+    String(value)
 
-        .replaceAll(
-          '&',
-          '&amp;'
-        )
+      .replaceAll('&', '&amp;')
 
-        .replaceAll(
-          '<',
-          '&lt;'
-        )
+      .replaceAll('<', '&lt;')
 
-        .replaceAll(
-          '>',
-          '&gt;'
-        )
+      .replaceAll('>', '&gt;')
 
-        .replaceAll(
-          '"',
-          '&quot;'
-        )
+      .replaceAll('"', '&quot;')
 
-        .replaceAll(
-          "'",
-          '&#039;'
-        );
+      .replaceAll("'", '&#039;');
 
 
-  const renderResearch =
-    (items) => {
+  const formatResearchDate = (value) => {
 
-      if (!writeupList) {
-        return;
-      }
-
-
-      if (!items.length) {
-
-        writeupList.innerHTML = `
-
-          <div class="research-empty">
-
-            <strong>
-              No public write-ups pinned yet.
-            </strong>
-
-            <br>
-
-            Add your best HTB links to
-            <code>pinnedWriteups</code>
-            in script.js, or connect
-            <code>/api/portfolio/research</code>
-            for automatic updates.
-
-          </div>
-
-        `;
-
-        return;
-
-      }
+    if (!value) {
+      return '';
+    }
 
 
-      writeupList.innerHTML =
-        items
-          .slice(0, 3)
-          .map(
-            (item, index) => `
+    const timestamp = Date.parse(value);
 
-              <a
-                class="writeup-card"
-                href="${escapeHtml(item.url)}"
-                target="_blank"
-                rel="noreferrer"
-              >
 
-                <span class="writeup-number">
-                  0${index + 1}
-                </span>
+    return Number.isFinite(timestamp)
+      ? String(new Date(timestamp).getFullYear())
+      : String(value);
 
-                <div>
+  };
 
-                  <h3>
-                    ${escapeHtml(item.title)}
-                  </h3>
 
-                  <p>
-                    ${escapeHtml(
-                      item.summary ||
-                      'Security write-up / research note.'
-                    )}
-                  </p>
+  const renderResearch = (items) => {
 
-                  <div class="writeup-meta">
+    if (!writeupList) {
+      return;
+    }
 
-                    ${escapeHtml(
-                      item.source ||
-                      'Research'
-                    )}
 
-                    ·
+    if (!items.length) {
 
-                    ${escapeHtml(
-                      item.date ||
-                      ''
-                    )}
+      writeupList.innerHTML = `
 
-                  </div>
+        <div class="research-empty">
+
+          <strong>
+            No public write-ups pinned yet.
+          </strong>
+
+          <br>
+
+          Publish on Medium or add a Markdown file
+          to the <code>research/</code> folder.
+          Local write-ups are indexed automatically
+          during the site build.
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+
+    writeupList.innerHTML =
+      items
+        .slice(0, 3)
+        .map(
+          (item, index) => `
+
+            <a
+              class="writeup-card"
+              href="${escapeHtml(item.url)}"
+              target="_blank"
+              rel="noreferrer"
+            >
+
+              <span class="writeup-number">
+                0${index + 1}
+              </span>
+
+              <div>
+
+                <h3>
+                  ${escapeHtml(item.title)}
+                </h3>
+
+                <p>
+                  ${escapeHtml(
+                    item.summary ||
+                    'Security write-up / research note.'
+                  )}
+                </p>
+
+                <div class="writeup-meta">
+
+                  ${escapeHtml(
+                    item.source || 'Research'
+                  )}
+
+                  ·
+
+                  ${escapeHtml(
+                    formatResearchDate(item.date)
+                  )}
 
                 </div>
 
-                <span class="text-link">
-                  Read ↗
-                </span>
+              </div>
 
-              </a>
+              <span class="text-link">
+                Read ↗
+              </span>
 
-            `
-          )
-          .join('');
+            </a>
 
-    };
+          `
+        )
+        .join('');
+
+  };
 
 
   /* ==========================================================
      GENERIC JSON FETCH
   ========================================================== */
 
-  const fetchJson =
-    async (
-      url,
-      options = {}
-    ) => {
+  const fetchJson = async (
+    url,
+    options = {}
+  ) => {
 
-      try {
+    try {
 
-        const response =
-          await fetch(
-            url,
-            {
-              ...options,
+      const response =
+        await fetch(
+          url,
+          {
+            ...options,
 
-              headers: {
-                Accept:
-                  'application/json',
+            headers: {
+              Accept: 'application/json',
 
-                ...(options.headers || {})
-              }
-
+              ...(options.headers || {})
             }
-          );
+
+          }
+        );
 
 
-        if (!response.ok) {
+      if (!response.ok) {
 
-          throw new Error(
-            `HTTP ${response.status}`
-          );
-
-        }
-
-
-        return await response.json();
-
-      } catch {
-
-        return null;
+        throw new Error(
+          `HTTP ${response.status}`
+        );
 
       }
 
-    };
+
+      return await response.json();
+
+    } catch {
+
+      return null;
+
+    }
+
+  };
 
 
   /* ==========================================================
      STATS API
   ========================================================== */
 
-  const normalizeStats =
-    (data) => {
+  const normalizeStats = (data) => {
+
+    if (
+      !data ||
+      typeof data !== 'object'
+    ) {
+
+      return;
+
+    }
+
+
+    Object.keys(siteData.stats).forEach((key) => {
 
       if (
-        !data ||
-        typeof data !== 'object'
+        data[key] !== undefined &&
+        data[key] !== null
       ) {
 
-        return;
+        siteData.stats[key] = data[key];
 
       }
 
+    });
 
-      Object.keys(
-        siteData.stats
-      ).forEach(
-        (key) => {
 
-          if (
-            data[key] !==
-              undefined &&
-            data[key] !==
-              null
-          ) {
+    renderProofStrip();
 
-            siteData.stats[key] =
-              data[key];
 
-          }
+    // If the Practice section has already animated,
+    // update its counters with the latest API values.
+    // animateCounter cancels any older animation first.
+    if (statsAnimated) {
 
-        }
+      counterNodes.forEach((node) => {
+
+        animateCounter(
+          node,
+          siteData.stats[node.dataset.count],
+          700
+        );
+
+      });
+
+    }
+
+  };
+
+
+  const loadStats = async () => {
+
+    const data =
+      await fetchJson(
+        `${window.PORTFOLIO_API}/stats`
       );
 
 
-      renderProofStrip();
+    normalizeStats(data);
 
-
-      if (statsAnimated) {
-
-        counterNodes.forEach(
-          (node) => {
-
-            animateCounter(
-              node,
-
-              siteData.stats[
-                node.dataset.count
-              ],
-
-              700
-            );
-
-          }
-        );
-
-      }
-
-    };
-
-
-  const loadStats =
-    async () => {
-
-      const data =
-        await fetchJson(
-          `${window.PORTFOLIO_API}/stats`
-        );
-
-
-      normalizeStats(
-        data
-      );
-
-    };
+  };
 
 
   /* ==========================================================
      MEDIUM RSS
   ========================================================== */
 
-  const fetchMediumFeed =
-    async (
-      feedUrl
-    ) => {
+  const fetchMediumFeed = async (feedUrl) => {
 
-      const proxy =
-        `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
+    const proxy =
+      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
 
 
-      const data =
-        await fetchJson(
-          proxy
-        );
+    const data = await fetchJson(proxy);
 
 
-      if (!data?.items) {
-        return [];
-      }
+    if (!data?.items) {
+      return [];
+    }
 
 
-      return data.items.map(
-        (item) => ({
+    return data.items.map((item) => ({
 
-          source:
-            'Medium',
+      source: 'Medium',
 
-          date:
-            item.pubDate
-              ? new Date(
-                  item.pubDate
-                ).getFullYear()
-              : '',
+      date: item.pubDate
+        ? new Date(item.pubDate).toISOString()
+        : '',
 
-          title:
-            item.title,
+      title: item.title,
 
-          summary:
-            String(
-              item.description || ''
-            )
-              .replace(
-                /<[^>]*>/g,
-                ''
-              )
-              .slice(
-                0,
-                160
-              ),
+      summary: String(item.description || '')
+        .replace(/<[^>]*>/g, '')
+        .slice(0, 160),
 
-          url:
-            item.link
+      url: item.link
 
-        })
-      );
+    }));
 
-    };
+  };
 
 
   /* ==========================================================
-     RESEARCH API
+     RESEARCH API + LOCAL MARKDOWN INDEX
   ========================================================== */
 
-  const loadResearch =
-    async () => {
+  const loadLocalResearch = async () => {
 
-      const apiData =
-        await fetchJson(
-          `${window.PORTFOLIO_API}/research`
+    try {
+
+      const response =
+        await fetch(
+          '/research-index.json',
+          { cache: 'no-cache' }
         );
 
 
-      const apiItems =
-        Array.isArray(apiData)
-          ? apiData
-          : Array.isArray(
-              apiData?.items
-            )
-            ? apiData.items
-            : [];
+      if (!response.ok) {
 
-
-      const mediumItems =
-        (
-          await Promise.all(
-
-            siteData.mediumFeeds
-              .filter(Boolean)
-              .map(
-                fetchMediumFeed
-              )
-
-          )
-        ).flat();
-
-
-      const merged = [
-
-        ...siteData.pinnedWriteups,
-
-        ...siteData.localResearch,
-
-        ...apiItems,
-
-        ...mediumItems
-
-      ];
-
-
-      const unique =
-        merged.filter(
-          (item, index, list) =>
-
-            item?.url &&
-            list.findIndex(
-              (other) =>
-                other.url ===
-                item.url
-            ) === index
+        throw new Error(
+          `HTTP ${response.status}`
         );
 
+      }
 
-      renderResearch(
-        unique
+
+      const data = await response.json();
+
+
+      return Array.isArray(data) ? data : [];
+
+    } catch (error) {
+
+      console.error(
+        'Local research loading failed:',
+        error
       );
 
-    };
+      return [];
+
+    }
+
+  };
 
 
+  const getResearchTimestamp = (item) => {
+
+    if (!item?.date) {
+      return 0;
+    }
+
+
+    const timestamp = Date.parse(item.date);
+
+
+    return Number.isFinite(timestamp)
+      ? timestamp
+      : 0;
+
+  };
+
+
+  const loadResearch = async () => {
+
+    const [
+      apiData,
+      localItems,
+      mediumResults
+    ] = await Promise.all([
+
+      fetchJson(
+        `${window.PORTFOLIO_API}/research`
+      ),
+
+      loadLocalResearch(),
+
+      Promise.all(
+        siteData.mediumFeeds
+          .filter(Boolean)
+          .map(fetchMediumFeed)
+      )
+
+    ]);
+
+
+    const apiItems =
+      Array.isArray(apiData)
+        ? apiData
+        : Array.isArray(apiData?.items)
+          ? apiData.items
+          : [];
+
+
+    const mediumItems = mediumResults.flat();
+
+
+    // Combine pinned, manually configured, API, local and Medium articles.
+    const merged = [
+
+      ...siteData.pinnedWriteups,
+
+      ...siteData.localResearch,
+
+      ...apiItems,
+
+      ...localItems,
+
+      ...mediumItems
+
+    ];
+
+
+    // Remove duplicate articles using their URL.
+    const unique = merged.filter(
+      (item, index, list) =>
+
+        item?.url &&
+
+        list.findIndex(
+          other => other?.url === item.url
+        ) === index
+    );
+
+
+    // Sort all sources from newest to oldest.
+    unique.sort(
+      (a, b) =>
+        getResearchTimestamp(b) -
+        getResearchTimestamp(a)
+    );
+
+
+    // Display only the three most recently published articles.
+    renderResearch(
+      unique.slice(0, 3)
+    );
+
+  };
+
+
+  // Render existing pinned articles while remote feeds load.
   renderResearch(
     siteData.pinnedWriteups
   );
@@ -1526,15 +1339,11 @@ const siteData = {
   ========================================================== */
 
   const form =
-    document.querySelector(
-      '#contact-form'
-    );
+    document.querySelector('#contact-form');
 
 
   const formStatus =
-    document.querySelector(
-      '#form-status'
-    );
+    document.querySelector('#form-status');
 
 
   form?.addEventListener(
@@ -1544,25 +1353,21 @@ const siteData = {
       event.preventDefault();
 
 
-      const data =
-        new FormData(form);
+      const data = new FormData(form);
 
 
       const subject =
         encodeURIComponent(
-
           `[Portfolio] ${
             data.get('intent')
           } — ${
             data.get('name')
           }`
-
         );
 
 
       const body =
         encodeURIComponent(
-
           `Hi Soumyashree,
 
 Reason: ${
@@ -1576,7 +1381,6 @@ ${
 My email: ${
             data.get('email')
           }`
-
         );
 
 
@@ -1600,9 +1404,7 @@ My email: ${
   ========================================================== */
 
   const year =
-    document.querySelector(
-      '#year'
-    );
+    document.querySelector('#year');
 
 
   if (year) {

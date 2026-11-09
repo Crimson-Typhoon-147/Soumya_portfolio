@@ -1,0 +1,10 @@
+[
+  {
+    "source": "Local",
+    "title": "Testing JWT Authentication",
+    "date": "2026-11-03",
+    "category": "WEB SECURITY",
+    "summary": "A test write-up demonstrating local Markdown integration with the portfolio.",
+    "url": "/research/test-writeup.html"
+  }
+]
